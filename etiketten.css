@@ -1,0 +1,292 @@
+:root {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --ink: #1f2530;
+  --muted: #6b7380;
+  --line: #d3d7de;
+  --accent: #e4782b;
+  --accent-ink: #ffffff;
+  --focus: #e4782b;
+  --page-shadow: 0 1px 2px rgba(31,37,48,.08), 0 8px 24px rgba(31,37,48,.10);
+  --s: 1;
+
+  /* Heft-Etikett (Avery Zweckform 3427): 8 pro A4-Seite, 2 x 4, randlos = 10,5 x 7,425 cm */
+  --cols: 2;
+  --rows: 4;
+  --fox-h: 3.8cm;
+  --fs-name: 26pt;      /* Vorname, rechts neben dem Fuchs */
+  --fs-subject: 15pt;   /* Gegenstand in eigener Zeile unter dem Fuchs: "Deutsch" oder "Deutsch / nemščina" */
+  --fs-foot: 11pt;      /* Klasse links unten und Schuljahr rechts unten */
+
+  /* Buch-Etikett (Avery Zweckform 3490 / 3475): 24 pro A4-Seite, 3 x 8, 70 x 36 mm */
+  --buch-img-h: 26mm;
+  --fs-name-buch: 20pt;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #171a20;
+    --surface: #21252d;
+    --ink: #e8eaee;
+    --muted: #98a0ad;
+    --line: #323844;
+    --accent: #f08a3e;
+    --accent-ink: #1a1a1a;
+    --focus: #f08a3e;
+    --page-shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #171a20;
+  --surface: #21252d;
+  --ink: #e8eaee;
+  --muted: #98a0ad;
+  --line: #323844;
+  --accent: #f08a3e;
+  --accent-ink: #1a1a1a;
+  --focus: #f08a3e;
+  --page-shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.45);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* gewinnt auch gegen .field { display: flex } */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.45 "Etikett", "Century Gothic", "TeX Gyre Adventor", "URW Gothic", "Avant Garde", sans-serif;
+}
+
+/* ---------- App-Rahmen ---------- */
+.app {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  min-height: 100vh;
+}
+.side {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding-block: 24px 32px;
+  padding-inline: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img { width: 44px; height: 44px; object-fit: contain; }
+.brand h1 { font-size: 18px; margin: 0; line-height: 1.2; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label, .lbl {
+  font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+}
+.fieldhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.hint { font-size: 12.5px; color: var(--muted); margin: 0; }
+.status { padding: 8px 10px; border-radius: 6px; background: var(--bg); color: var(--ink); }
+.status.warn { color: var(--accent); }
+input[type="text"], select {
+  font: inherit; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%; min-width: 0;
+}
+input:focus, select:focus, button:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 1px;
+}
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.seg { display: flex; gap: 14px; }
+.seg label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 700; }
+.seg input { accent-color: var(--accent); margin: 0; }
+
+/* Ausklappbare CSV-Beschreibung */
+.help { font-size: 12.5px; color: var(--muted); }
+.help summary { cursor: pointer; font-weight: 700; color: var(--ink); }
+.help summary:hover { color: var(--accent); }
+.help pre {
+  margin: 8px 0; padding: 8px 10px; border-radius: 6px; background: var(--bg); color: var(--ink);
+  font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; overflow-x: auto;
+}
+.help ul { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.help li b { color: var(--ink); }
+.help code { font-size: 11.5px; }
+.help .forms { border-collapse: collapse; margin-top: 4px; }
+.help .forms td { padding: 2px 10px 2px 0; vertical-align: top; }
+
+/* ---------- Editierbare Tabellen ---------- */
+.tbl { display: flex; flex-direction: column; gap: 6px; }
+.tbl input[type="text"], .tbl select { padding: 6px 8px; font-size: 14px; }
+.thead {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+  padding-inline: 2px;
+}
+.thead.kid { margin-bottom: -2px; }
+/* Klassenliste: Variante | Vorname | x */
+.kid {
+  display: grid; grid-template-columns: 8.6em 1fr 30px; gap: 6px; align-items: center;
+}
+/* Gegenstaende: Vorschau | Bild | Für | x  //  Deutsch | Slowenisch */
+.fach {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 30px;
+  grid-template-areas: "img bild aud del" "img de si del";
+  gap: 6px; align-items: center;
+  padding: 6px; border: 1px solid var(--line); border-radius: 8px;
+}
+.fach .thumb {
+  grid-area: img; width: 40px; height: 40px; padding: 2px; align-self: center;
+  border: 1px dashed transparent; border-radius: 6px; background: transparent; cursor: pointer;
+}
+.fach .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.fach .thumb:hover { border-color: var(--accent); filter: none; }
+.fach .thumb.missing img { display: none; }
+.fach .thumb.missing { border-color: var(--line); }
+.fach .thumb.missing::before { content: "+"; color: var(--muted); font-size: 20px; line-height: 1; }
+.fach .c-bild { grid-area: bild; }
+/* Buch: Vorschau | Bild  //  Etiketten pro Kind */
+.fach.buch-row { grid-template-columns: 40px 1fr 1fr; grid-template-areas: "img bild bild" "img bi bi" "img mono mono"; }
+.fach .c-count { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.fach .c-bi { grid-area: bi; }
+.fach .c-mono { grid-area: mono; }
+.fach .c-count input { width: 4.5em; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+.fach .c-aud { grid-area: aud; }
+.fach .c-de { grid-area: de; }
+.fach .c-si { grid-area: si; }
+.fach .del { grid-area: del; }
+.del {
+  width: 30px; height: 30px; padding: 0; border-radius: 6px; line-height: 1;
+  font-size: 18px; font-weight: 400; color: var(--muted); background: transparent; border-color: transparent;
+}
+.del:hover { color: var(--accent); background: var(--bg); filter: none; }
+
+.actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+button {
+  font: inherit; font-weight: 700; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 6px; padding: 9px 14px;
+  background: var(--surface); color: var(--ink);
+}
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+button:hover { filter: brightness(.96); }
+.btnrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btnrow button { padding-inline: 8px; white-space: nowrap; }
+.btnrow.three { grid-template-columns: repeat(3, 1fr); }
+.btnrow.three button { font-size: 13px; padding-inline: 6px; }
+.file-btn { position: relative; overflow: hidden; }
+.file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.stats { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stats b { color: var(--ink); }
+.warn { font-size: 12.5px; color: var(--accent); margin: 0; }
+
+/* ---------- Bogen-Ansicht ---------- */
+.main { padding-block: 28px 60px; padding-inline: 28px; min-width: 0; }
+.pages { display: flex; flex-direction: column; gap: 28px; align-items: flex-start; }
+.slot {
+  width: calc(21cm * var(--s));
+  height: calc(29.7cm * var(--s));
+  position: relative;
+}
+.sheet {
+  position: absolute; top: 0; left: 0;
+  transform: scale(var(--s)); transform-origin: top left;
+  width: 21cm; height: 29.7cm;
+  padding: 0;
+  background: #ffffff; color: #2b2b2b;
+  box-shadow: var(--page-shadow);
+  font-family: "Etikett", "Century Gothic", "TeX Gyre Adventor", "URW Gothic", "Avant Garde", sans-serif;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact;
+}
+/* Buch-Bogen: Avery 3490/3475 hat 4,5 mm Rand oben und unten, seitlich keinen;
+   3 Spalten x 70 mm, 8 Zeilen x 36 mm = 288 mm. */
+.sheet.buch { padding: 4.5mm 0; --cols: 3; --rows: 8; }
+
+/* Druck auf vorgestanzte Klebeetiketten: keine Schnittlinien. Am Bildschirm
+   nur eine zarte Hilfslinie zur Orientierung, die im Druck entfaellt. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-template-rows: repeat(var(--rows), 1fr);
+  width: 100%; height: 100%;
+  --guide: 1px solid #f0f0f0;
+  border-top: var(--guide);
+  border-left: var(--guide);
+}
+.label {
+  min-width: 0; min-height: 0;
+  border-right: var(--guide);
+  border-bottom: var(--guide);
+  padding: .4cm .45cm .35cm .4cm;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto auto;   /* Fuchs + Name  //  Gegenstand  //  Klasse | Schuljahr */
+  column-gap: .25cm; row-gap: .12cm;
+}
+/* Oben Fuchs und Vorname als Flex-Zeile: der Name behaelt seine Groesse und
+   bricht nicht um, der Fuchs hat als Sollbreite die alte Spalte (--fox-h +
+   .3cm) und schrumpft bei langen Namen bis auf null. */
+.label .top {
+  grid-row: 1; grid-column: 1 / -1;
+  display: flex; align-items: center; gap: .25cm; min-height: 0;
+}
+.label .fox {
+  flex: 0 1 calc(var(--fox-h) + .3cm); min-width: 0; height: var(--fox-h);
+  display: flex; align-items: center; justify-content: center;
+}
+.label .fox img { height: 100%; width: auto; max-width: 100%; object-fit: contain; }
+.label .text { flex: 0 0 auto; padding: 0 .1cm; }
+.label .name {
+  font-size: var(--fs-name); font-weight: 700; line-height: 1.1;
+  white-space: nowrap;
+}
+/* Gegenstand in eigener Zeile unter dem Fuchs, ueber die volle Breite */
+.label .subj { grid-row: 2; grid-column: 1 / -1; font-size: var(--fs-subject); font-weight: 700; line-height: 1.25; }
+.label .si { white-space: nowrap; }   /* gleiche Schrift wie der deutsche Teil */
+.label .cls, .label .year { grid-row: 3; align-self: end; line-height: 1.2; }
+/* Klasse und Schuljahr in derselben Schrift und Groesse (grau, normal) */
+.label .cls, .label .year { color: #8a8a8a; font-weight: 400; }
+.label .cls { grid-column: 1; font-size: var(--fs-foot); }
+.label .year { grid-column: 2; text-align: right; padding-right: .1cm; font-size: var(--fs-foot); }
+.label.empty { grid-template-columns: 1fr; }
+
+/* Buch-Etikett: Bild links, Vorname rechts, beides vertikal mittig, sonst nichts.
+   Gleiche Mechanik wie oben: Name behaelt seine Groesse, das Bild schrumpft.
+   Nur wenn der Name allein breiter als das Etikett ist, verkleinert
+   index.html (fitNames) die Schrift. */
+.label.buch {
+  display: flex; align-items: center; gap: 3mm;
+  padding: 3mm 4mm;
+}
+.label.buch .fox { flex: 0 1 auto; height: var(--buch-img-h); justify-content: flex-start; }
+.label.buch .text { padding: 0; }
+.label.buch .name { font-size: var(--fs-name-buch); }
+.label.buch.empty { display: block; }
+
+.empty-state {
+  color: var(--muted); border: 1px dashed var(--line); border-radius: 8px;
+  padding: 28px; max-width: 42ch;
+}
+
+/* ---------- Schmal ---------- */
+@media (max-width: 900px) {
+  .app { grid-template-columns: 1fr; }
+  .side { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .main { padding-inline: 16px; }
+}
+
+/* ---------- Druck ---------- */
+@page { size: A4; margin: 0; }
+@media print {
+  :root { --s: 1; }
+  body { background: #fff; }
+  .app { display: block; }
+  .side, .empty-state { display: none !important; }
+  .main { padding: 0; }
+  .pages { display: block; }
+  .slot { width: 21cm; height: 29.7cm; break-after: page; page-break-after: always; }
+  .slot:last-child { break-after: auto; page-break-after: auto; }
+  .sheet { box-shadow: none; transform: none; }
+  .grid { --guide: none; }
+}

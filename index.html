@@ -1,0 +1,736 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heftetiketten</title>
+<link rel="icon" type="image/png" sizes="128x128" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="stylesheet" href="fonts.css">
+<link rel="stylesheet" href="etiketten.css">
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <img src="foxes/01_deutsch.png" alt="">
+      <div>
+        <h1>Heftetiketten</h1>
+        <p>Heftetiketten pro Kind, 8 je A4-Seite</p>
+      </div>
+    </div>
+    <p class="hint status" id="status" hidden></p>
+
+    <div class="field">
+      <div class="fieldhead"><span class="lbl">Projekt</span><span class="count" id="proj-name"></span></div>
+      <div class="btnrow">
+        <button type="button" id="proj-new">Neues Projekt</button>
+        <button type="button" id="proj-open">Projekt laden</button>
+        <button type="button" id="proj-save">Speichern</button>
+        <button type="button" id="proj-saveas">Speichern unter …</button>
+      </div>
+      <input id="proj-file" type="file" accept=".json,application/json" hidden>
+      <p class="hint" id="proj-hint"></p>
+    </div>
+
+    <div class="field">
+      <span class="lbl" id="typ-lbl">Projektansicht</span>
+      <div class="seg" role="radiogroup" aria-labelledby="typ-lbl">
+        <label><input type="radio" name="typ" value="heft" checked> Heft-Bögen</label>
+        <label><input type="radio" name="typ" value="buch"> Buch-Bögen</label>
+      </div>
+      <p class="hint" id="typ-hint"></p>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="klasse">Klasse</label>
+        <input id="klasse" type="text" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="jahr">Schuljahr</label>
+        <input id="jahr" type="text" autocomplete="off">
+      </div>
+    </div>
+
+    <section class="field" aria-labelledby="kinder-lbl">
+      <div class="fieldhead">
+        <span class="lbl" id="kinder-lbl">Klassenliste</span>
+        <span class="count" id="kinder-count"></span>
+      </div>
+      <div class="tbl">
+        <div class="thead kid"><span>Variante</span><span>Vorname</span><span></span></div>
+        <div id="kinder-rows"></div>
+      </div>
+      <div class="btnrow three">
+        <button type="button" id="kind-add">+ Kind</button>
+        <button class="file-btn" type="button">CSV-Datei<input id="kinder-csv" type="file" accept=".csv,.txt,text/csv,text/plain" aria-label="Klassenliste aus CSV-Datei importieren"></button>
+        <button type="button" id="kinder-paste" title="Zwischenablage einfügen (ersetzt die Liste)">Einfügen</button>
+      </div>
+      <p class="hint">Import ersetzt die Liste: CSV-Datei oder Zwischenablage mit <code>Variante;Vorname</code> je Zeile, auch aus Excel kopiert. ⌘V in einem Feld fügt Zeilen an dieser Stelle ein.</p>
+      <details class="help">
+        <summary>CSV-Format im Detail</summary>
+        <pre>Variante;Vorname
+zweisprachig;Lena
+einsprachig;Jakob</pre>
+        <ul>
+          <li><b>Eine Zeile pro Kind, zwei Spalten.</b> Spalte 1 die Variante, Spalte 2 der Vorname (so, wie er auf dem Etikett stehen soll).</li>
+          <li><b>Variante:</b> <code>zweisprachig</code> oder <code>einsprachig</code>. Erkannt werden auch <code>z</code>, <code>zwei</code>, <code>bi</code>, <code>2</code>, <code>de-si</code> bzw. <code>e</code>, <code>ein</code>, <code>mono</code>, <code>1</code>, <code>de</code>, <code>deutsch</code>; Groß-/Kleinschreibung egal.</li>
+          <li><b>Trennzeichen</b> je Zeile: Strichpunkt <code>;</code> (deutsches Excel), sonst Tabulator (aus Excel kopiert), sonst Komma. Anführungszeichen um eine Zelle werden entfernt.</li>
+          <li><b>Übersprungen:</b> Leerzeilen, Zeilen mit <code>#</code> am Anfang, die Kopfzeile <code>Variante;Vorname</code> (auch <code>Sprache;…</code>, <code>Typ;…</code>).</li>
+          <li><b>Nachsichtig:</b> eine Zeile mit nur einem Feld wird als Vorname übernommen (zweisprachig); eine unbekannte Variante gilt als zweisprachig. Beides steht danach in der Tabelle und lässt sich dort korrigieren.</li>
+          <li><b>Ersetzen oder einfügen:</b> <i>CSV-Datei</i> und <i>Einfügen</i> ersetzen die ganze Liste. ⌘V / Strg+V in ein Feld ersetzt nur die Zeile, in der eingefügt wird, durch die eingefügten Zeilen.</li>
+        </ul>
+      </details>
+    </section>
+
+    <section class="field" id="faecher-sec" aria-labelledby="faecher-lbl">
+      <div class="fieldhead">
+        <span class="lbl" id="faecher-lbl">Hefte: Gegenstände</span>
+        <span class="count" id="faecher-count"></span>
+      </div>
+      <div class="tbl" id="faecher-rows"></div>
+      <div class="btnrow three">
+        <button type="button" id="fach-add">+ Gegenstand</button>
+        <button class="file-btn" type="button">CSV-Datei<input id="faecher-csv" type="file" accept=".csv,.txt,text/csv,text/plain" aria-label="Gegenstände aus CSV-Datei importieren"></button>
+        <button type="button" id="faecher-paste" title="Zwischenablage einfügen (ersetzt die Liste)">Einfügen</button>
+      </div>
+      <p class="hint">Bild: ein Fuchs aus der Liste oder ein eigenes Bild (Klick auf die Vorschau). Sprache 2 leer lassen, wenn der Gegenstand nur einen Namen hat. Import ersetzt die Liste: <code>Bild;Sprache 1;Sprache 2</code> je Zeile, optional zuletzt die Gruppe.</p>
+      <details class="help">
+        <summary>CSV-Format im Detail</summary>
+        <pre>Bild;Sprache 1;Sprache 2;Für
+01_deutsch.png;Deutsch;nemščina
+03_sachunterricht.png;Mitteilungsheft
+05_englisch.png;Englisch;angleščina;einsprachig
+Zeichenblock;risalni blok</pre>
+        <ul>
+          <li><b>Eine Zeile pro Gegenstand, 1 bis 3 Spalten</b> plus optional die Gruppe als letzte Spalte. Erlaubte Formen:
+            <table class="forms">
+              <tr><td><code>Bild;Sprache 1;Sprache 2</code></td><td>zweisprachiger Gegenstand</td></tr>
+              <tr><td><code>Bild;Name</code></td><td>Gegenstand mit nur einem Namen</td></tr>
+              <tr><td><code>Sprache 1;Sprache 2</code></td><td>ohne Bild – Bild danach in der Tabelle wählen</td></tr>
+              <tr><td><code>Name</code> oder <code>Bild</code></td><td>eine Spalte</td></tr>
+            </table>
+          </li>
+          <li><b>Bild:</b> ein Dateiname aus <code>foxes/</code> – <span id="fox-file-list"></span> – oder ein Pfad mit <code>/</code> relativ zur Seite. Als Bild gilt eine Zelle, wenn sie auf <code>.png</code>, <code>.jpg</code>, <code>.jpeg</code>, <code>.gif</code>, <code>.webp</code> oder <code>.svg</code> endet oder einen <code>/</code> enthält; so wird <code>Bild;Name</code> von <code>Sprache 1;Sprache 2</code> unterschieden. Eigene hochgeladene Bilder lassen sich nur in der App zuweisen, nicht per CSV.</li>
+          <li><b>Für</b> (letzte Spalte, optional): <code>alle</code> (Standard, kann entfallen), <code>zweisprachig</code> oder <code>einsprachig</code> – gleiche Kurzformen wie bei der Variante der Klassenliste. Erkannt am Inhalt der letzten Zelle; ein Gegenstand, der wörtlich „einsprachig" heißt und ohne weitere Spalte am Zeilenende steht, würde daher als Gruppe gelesen.</li>
+          <li><b>Trennzeichen</b> je Zeile: Strichpunkt <code>;</code>, sonst Tabulator, sonst Komma. Anführungszeichen um eine Zelle werden entfernt, leere Spalten am Zeilenende ignoriert.</li>
+          <li><b>Übersprungen:</b> Leerzeilen, Zeilen mit <code>#</code> am Anfang und eine Kopfzeile – aber nur, wenn <i>alle</i> Zellen Spaltennamen sind (<code>Bild</code>, <code>Datei</code>, <code>Name</code>, <code>Gegenstand</code>, <code>Sprache 1</code>, <code>Sprache 2</code>, <code>Deutsch</code>, <code>Slowenisch</code>, <code>Für</code>). Ein Gegenstand namens „Deutsch" ohne Bild bleibt also erhalten.</li>
+          <li><b>Unvollständige Zeilen</b> (ohne Bild oder ohne Sprache 1) landen in der Tabelle, werden aber nicht gedruckt.</li>
+          <li><b>Ersetzen oder einfügen:</b> <i>CSV-Datei</i> und <i>Einfügen</i> ersetzen die ganze Liste; ⌘V / Strg+V in ein Feld ersetzt nur diese Zeile.</li>
+        </ul>
+      </details>
+      <input id="img-file" type="file" accept="image/*" hidden>
+    </section>
+
+    <section class="field" id="buch-sec" aria-labelledby="buch-lbl">
+      <span class="lbl" id="buch-lbl">Bücher: Bild und Anzahl</span>
+      <div class="fach buch-row" id="buch-row"></div>
+      <p class="hint">Ein Bild für alle Buch-Etiketten: ein Fuchs aus der Liste oder ein eigenes Bild (Klick auf die Vorschau). Anzahl je Kind getrennt für zweisprachige und einsprachige Kinder; 0 lässt eine Gruppe aus.</p>
+    </section>
+
+    <div class="actions">
+      <div class="stats" id="stats"></div>
+      <p class="warn" id="warn" hidden></p>
+      <button class="primary" type="button" id="print">Drucken</button>
+      <p class="hint" id="print-hint"></p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="pages" id="pages"></div>
+  </main>
+</div>
+
+<script>
+  // Ein Projekt liefert zwei Sorten Boegen, je ein vorgestanztes Etikettenformat
+  // (Raster in etiketten.css, .sheet.heft/.sheet.buch). Angezeigt und gedruckt wird
+  // immer eine Sorte (state.typ = Ansicht, nicht Teil der Projektdatei):
+  //   heft: Avery Zweckform 3427, 105 x 74,25 mm, 2 x 4 = 8 pro Blatt - Bild, Name, Gegenstand, Klasse, Schuljahr
+  //   buch: Avery Zweckform 3490/3475, 70 x 36 mm, 3 x 8 = 24 pro Blatt - nur Bild und Name
+  const VIEW_KEY = 'fuchs-etiketten-ansicht';
+  const FORMATE = {
+    heft: { perPage: 8,  hint: 'Für Etikettenbögen 2 × 4, 105 × 74,25 mm (Avery Zweckform 3427).' },
+    buch: { perPage: 24, hint: 'Für Etikettenbögen 3 × 8, 70 × 36 mm (Avery Zweckform 3490 / 3475).' },
+  };
+  const STORE_KEY = 'fuchs-etiketten-projekt';
+  const FORMAT = 'fuchs-etiketten/1';
+
+  // Alle Freisteller in foxes/ - die Standardbilder zur Auswahl.
+  const FOX_FILES = [
+    ['01_deutsch.png', 'Deutsch'], ['02_mathematik.png', 'Mathematik'], ['03_sachunterricht.png', 'Sachunterricht'],
+    ['04_musik.png', 'Musik'], ['05_englisch.png', 'Englisch'], ['06_bewegung_sport.png', 'Bewegung und Sport'],
+    ['07_religion.png', 'Religion'], ['08_kunst_gestaltung.png', 'Kunst & Gestaltung'],
+    ['09_technik_design.png', 'Technik & Design'], ['10_freiarbeit.png', 'Freiarbeit'], ['11_pause.png', 'Pause'],
+  ];
+  const FOX_SET = new Set(FOX_FILES.map(f => f[0]));
+  const IMG_MAX_H = 480;   // Hochgeladene Bilder auf diese Hoehe verkleinern (3,8 cm -> ca. 320 dpi)
+
+  // Eingebaute Kopie von gegenstaende.csv - greift, wenn die Datei nicht
+  // automatisch geladen werden kann (Browser blockieren fetch bei file://).
+  const DEFAULT_FAECHER_CSV = `Bild;Sprache 1;Sprache 2
+01_deutsch.png;Deutsch;nemščina
+02_mathematik.png;Mathematik;matematika
+03_sachunterricht.png;Sachunterricht;stvarni pouk
+04_musik.png;Musik;glasba
+05_englisch.png;Englisch;angleščina
+07_religion.png;Religion;verouk
+10_freiarbeit.png;Freiarbeit;prosto delo`;
+  // Beispielkinder fuer den ersten Start.
+  const DEFAULT_KINDER_CSV = `Variante;Vorname
+zweisprachig;Lena
+einsprachig;Jakob
+zweisprachig;Nina
+einsprachig;Matej`;
+
+  // buch.count: Etiketten pro Kind, getrennt fuer zweisprachige (bi) und einsprachige (mono) Kinder
+  const state = { typ: 'heft', klasse: '2b', jahr: '2026/27', kinder: [], faecher: [], buch: { file: '01_deutsch.png', count: { bi: 1, mono: 1 } } };
+  const clampCount = v => Math.max(0, Math.min(99, parseInt(v, 10) || 0));
+  let faecherSource = 'eingebaute Standardliste';
+
+  const $ = id => document.getElementById(id);
+  const klasseEl = $('klasse'), jahrEl = $('jahr'), pagesEl = $('pages'), statsEl = $('stats'),
+        warnEl = $('warn'), statusEl = $('status');
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  /* ---------- CSV ---------- */
+
+  // Trennzeichen je Zeile: ; vor Tab vor Komma; Anfuehrungszeichen entfernen.
+  function splitCsvLine(t) {
+    const sep = t.includes(';') ? ';' : t.includes('\t') ? '\t' : ',';
+    return t.split(sep).map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+  }
+  function csvLines(text) {
+    return text.replace(/^\ufeff/, '').split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+  }
+
+  // "zweisprachig", "bi", "2", "de/si" -> true; "einsprachig", "mono", "1", "de" -> false; sonst null.
+  function parseVariant(v) {
+    v = (v || '').toLowerCase().replace(/[\s_-]/g, '');
+    if (/^(zweisprachig|zwei|z|bi|bilingual|2|desi|deslo|desl)$/.test(v)) return true;
+    if (/^(einsprachig|ein|e|mono|1|de|deutsch|d)$/.test(v)) return false;
+    return null;
+  }
+
+  // Import ist nachsichtig: unklare Variante -> zweisprachig, nur ein Feld -> Name.
+  // Korrigiert wird danach in der Tabelle.
+  function parseKinderCsv(text) {
+    const out = [];
+    csvLines(text).forEach(line => {
+      const c = splitCsvLine(line);
+      if (/^(variante|sprache|typ)$/i.test(c[0]) && c.length > 1) return;   // Kopfzeile
+      if (c.length === 1) { out.push({ bilingual: true, name: c[0] }); return; }
+      const v = parseVariant(c[0]);
+      out.push({ bilingual: v === null ? true : v, name: c[1] || '' });
+    });
+    return out;
+  }
+  // Gegenstaende-CSV, je Zeile 1 bis 3 Spalten:
+  //   Bild;Sprache 1;Sprache 2  zweisprachiger Gegenstand
+  //   Bild;Name                 Gegenstand mit nur einem Namen (z. B. Mitteilungsheft)
+  //   Sprache 1;Sprache 2       ohne Bild - wird in der Tabelle nachgewaehlt
+  //   Name  bzw.  Bild          eine Spalte
+  // Optional als letzte Spalte "Für": alle | zweisprachig | einsprachig.
+  // Ob die erste Spalte ein Bild ist, entscheidet die Dateiendung bzw. ein "/".
+  const HEADER_WORDS = /^(bild|datei|file|image|name|gegenstand|fach|sprache\s?[12]|deutsch|de|slowenisch|slo|si|für|fuer|wer|variante)$/i;
+
+  // Spalte "Für": wer den Gegenstand bekommt. 'all' | 'bi' | 'mono'; null = kein Wert.
+  function parseAudience(v) {
+    const t = (v || '').toLowerCase().replace(/[\s_-]/g, '');
+    if (/^(alle|beide|both|all|\*)$/.test(t)) return 'all';
+    const b = parseVariant(t);
+    return b === null ? null : (b ? 'bi' : 'mono');
+  }
+  const AUD_LABEL = { all: 'alle', bi: 'zweisprachig', mono: 'einsprachig' };
+  function looksLikeImage(v) { return /\.(png|jpe?g|gif|webp|svg)$/i.test(v) || v.includes('/') || v.startsWith('data:'); }
+  function parseFaecherCsv(text) {
+    const out = [];
+    csvLines(text).forEach(line => {
+      const c = splitCsvLine(line).filter((v, i, a) => i < a.length - 1 || v !== '');   // leere Endspalten weg
+      if (!c.length || !c.some(Boolean)) return;
+      if (c.length > 1 && c.every(v => HEADER_WORDS.test(v))) return;   // Kopfzeile
+      let aud = 'all';
+      if (c.length > 1 && parseAudience(c[c.length - 1]) !== null) aud = parseAudience(c.pop());
+      let file = '', de = '', si = '';
+      if (c.length >= 3 || (c.length === 2 && looksLikeImage(c[0]))) { [file, de = '', si = ''] = c; }
+      else if (c.length === 2) { [de, si] = c; }
+      else if (looksLikeImage(c[0])) { file = c[0]; }
+      else { de = c[0]; }
+      out.push({ file, de, si, aud });
+    });
+    return out;
+  }
+
+  /* ---------- Tabellen ---------- */
+
+  function delBtn(label, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'del'; b.textContent = '×'; b.setAttribute('aria-label', label);
+    b.addEventListener('click', onClick);
+    return b;
+  }
+  function textInput(value, placeholder, cls, onInput, list) {
+    const i = document.createElement('input');
+    i.type = 'text'; i.value = value; i.placeholder = placeholder; i.className = cls;
+    i.autocomplete = 'off'; i.spellcheck = false;
+    i.setAttribute('aria-label', placeholder);
+    if (list) i.setAttribute('list', list);
+    i.addEventListener('input', () => { onInput(i.value); update(); });
+    return i;
+  }
+
+  // ⌘V / Strg+V in einem Tabellenfeld: mehrzeiliger oder getrennter Text
+  // ersetzt die Zeile durch die eingefuegten Zeilen (wie in einer Tabelle).
+  function rowPaste(row, kind, idx) {
+    row.addEventListener('paste', e => {
+      const t = (e.clipboardData || window.clipboardData).getData('text');
+      if (!/[\r\n;\t]/.test(t.trim())) return;   // einfacher Text: normal einfuegen
+      e.preventDefault();
+      const n = pasteRows(kind, t, idx);
+      note(n ? `${n} ${n === 1 ? 'Zeile' : 'Zeilen'} eingefügt.` : 'Zwischenablage enthält keine passenden Zeilen.', !n);
+    });
+  }
+
+  function buildKinder() {
+    const box = $('kinder-rows'); box.innerHTML = '';
+    state.kinder.forEach((k, idx) => {
+      const row = document.createElement('div'); row.className = 'kid';
+      rowPaste(row, 'kinder', idx);
+      const sel = document.createElement('select');
+      sel.setAttribute('aria-label', 'Variante');
+      sel.innerHTML = '<option value="bi">zweisprachig</option><option value="de">einsprachig</option>';
+      sel.value = k.bilingual ? 'bi' : 'de';
+      sel.addEventListener('change', () => { k.bilingual = sel.value === 'bi'; update(); });
+      row.append(sel,
+        textInput(k.name, 'Vorname', 'c-name', v => { k.name = v; }),
+        delBtn(`${k.name || 'Zeile'} entfernen`, () => { state.kinder.splice(idx, 1); buildKinder(); update(); }));
+      box.append(row);
+    });
+  }
+
+  // Fuchs-Dateiname -> foxes/, Data-URL (hochgeladen) oder Pfad mit / unveraendert.
+  function imgPath(file) { return file.startsWith('data:') || file.includes('/') ? file : 'foxes/' + file; }
+  function isCustom(file) { return !!file && !FOX_SET.has(file); }
+
+  // Bilddatei lesen, auf IMG_MAX_H verkleinern, als Data-URL zurueckgeben.
+  // PNG/GIF/WebP/SVG behalten Transparenz (PNG), Fotos werden JPEG.
+  function shrinkImage(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const k = Math.min(1, IMG_MAX_H / img.naturalHeight);
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        const keepAlpha = /png|gif|webp|svg/.test(file.type);
+        resolve(keepAlpha ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Bild nicht lesbar')); };
+      img.src = url;
+    });
+  }
+
+  // Auswahl: Fuchsbilder, "Eigenes Bild hochladen…", ggf. das aktuelle eigene Bild.
+  function imgSelect(f, onUpload, setImg) {
+    const sel = document.createElement('select'); sel.className = 'c-bild'; sel.setAttribute('aria-label', 'Bild');
+    const opt = (v, t, extra = '') => `<option value="${esc(v)}"${extra}>${esc(t)}</option>`;
+    sel.innerHTML = opt('', 'Bild wählen …', ' disabled')
+      + '<optgroup label="Fuchsbilder">' + FOX_FILES.map(([v, t]) => opt(v, t)).join('') + '</optgroup>'
+      + opt('__upload', 'Eigenes Bild hochladen …')
+      + (isCustom(f.file) ? opt('__custom', f.file.startsWith('data:') ? 'Eigenes Bild' : 'Datei: ' + f.file) : '');
+    sel.value = isCustom(f.file) ? '__custom' : f.file;
+    sel.addEventListener('change', () => {
+      if (sel.value === '__upload') { sel.value = isCustom(f.file) ? '__custom' : f.file; onUpload(); return; }
+      f.file = sel.value; setImg(); update();
+    });
+    return sel;
+  }
+
+  function buildFaecher() {
+    const box = $('faecher-rows'); box.innerHTML = '';
+    state.faecher.forEach((f, idx) => {
+      const row = document.createElement('div'); row.className = 'fach';
+      rowPaste(row, 'faecher', idx);
+      // Vorschau ist gleichzeitig der Upload-Knopf
+      const thumb = document.createElement('button'); thumb.type = 'button'; thumb.className = 'thumb';
+      thumb.title = 'Eigenes Bild hochladen'; thumb.setAttribute('aria-label', 'Eigenes Bild hochladen');
+      const img = document.createElement('img'); img.alt = ''; thumb.append(img);
+      img.addEventListener('error', () => thumb.classList.add('missing'));
+      const setImg = () => {
+        thumb.classList.toggle('missing', !f.file);
+        if (f.file) img.src = imgPath(f.file); else img.removeAttribute('src');
+      };
+      setImg();
+      const upload = () => { uploadTarget = f; $('img-file').click(); };
+      thumb.addEventListener('click', upload);
+      const aud = document.createElement('select'); aud.className = 'c-aud'; aud.setAttribute('aria-label', 'Für welche Kinder');
+      aud.innerHTML = '<option value="all">für alle</option><option value="bi">nur zweisprachige</option><option value="mono">nur einsprachige</option>';
+      aud.value = f.aud || 'all';
+      aud.addEventListener('change', () => { f.aud = aud.value; update(); });
+      row.append(thumb,
+        imgSelect(f, upload, setImg),
+        aud,
+        textInput(f.de, 'Sprache 1', 'c-de', v => { f.de = v; }),
+        textInput(f.si, 'Sprache 2 (leer = nur ein Name)', 'c-si', v => { f.si = v; }),
+        delBtn(`${f.de || 'Zeile'} entfernen`, () => { state.faecher.splice(idx, 1); buildFaecher(); update(); }));
+      box.append(row);
+    });
+  }
+
+  // Buch: ein Bild fuer alle Etiketten plus Anzahl pro Kind
+  function buildBuch() {
+    const row = $('buch-row'); row.innerHTML = '';
+    const b = state.buch;
+    const thumb = document.createElement('button'); thumb.type = 'button'; thumb.className = 'thumb';
+    thumb.title = 'Eigenes Bild hochladen'; thumb.setAttribute('aria-label', 'Eigenes Bild hochladen');
+    const img = document.createElement('img'); img.alt = ''; thumb.append(img);
+    img.addEventListener('error', () => thumb.classList.add('missing'));
+    const setImg = () => { thumb.classList.toggle('missing', !b.file); if (b.file) img.src = imgPath(b.file); else img.removeAttribute('src'); };
+    setImg();
+    const upload = () => { uploadTarget = b; $('img-file').click(); };
+    thumb.addEventListener('click', upload);
+    const counter = (key, text) => {
+      const lab = document.createElement('label'); lab.className = 'c-count c-' + key;
+      const num = document.createElement('input'); num.type = 'number'; num.min = 0; num.max = 99; num.value = b.count[key];
+      num.setAttribute('aria-label', 'Etiketten pro ' + text + ' Kind');
+      num.addEventListener('input', () => { b.count[key] = clampCount(num.value); update(); });
+      lab.append(num, document.createTextNode(' pro ' + text + ' Kind'));
+      return lab;
+    };
+    row.append(thumb, imgSelect(b, upload, setImg), counter('bi', 'zweisprachigem'), counter('mono', 'einsprachigem'));
+  }
+
+  // Ansicht umschalten: welche Boegen rechts stehen und gedruckt werden.
+  function applyTyp() {
+    const buch = state.typ === 'buch';
+    document.querySelector(`input[name="typ"][value="${state.typ}"]`).checked = true;
+    $('buch-sec').hidden = !buch;   // Bild und Anzahl nur in der Buch-Ansicht
+    $('typ-hint').textContent = buch
+      ? 'Buch-Etiketten: Bild und Vorname, je Kind die eingestellte Anzahl. 24 je Bogen.'
+      : 'Heft-Etiketten: je Kind ein Etikett pro Gegenstand mit Klasse und Schuljahr, alle Kinder hintereinander. 8 je Bogen.';
+    $('print').textContent = buch ? 'Buch-Bögen drucken' : 'Heft-Bögen drucken';
+    $('print-hint').textContent = FORMATE[state.typ].hint + ' Im Druckdialog: A4, Skalierung 100 %, Ränder „Keine“. Die hellen Linien am Bildschirm werden nicht gedruckt.';
+    try { localStorage.setItem(VIEW_KEY, state.typ); } catch (e) {}
+  }
+
+  function addRow(kind) {
+    if (kind === 'kinder') {
+      state.kinder.push({ bilingual: state.kinder.at(-1)?.bilingual ?? true, name: '' });
+      buildKinder();
+      $('kinder-rows').lastElementChild.querySelector('.c-name').focus();
+    } else {
+      state.faecher.push({ file: '', de: '', si: '', aud: 'all' });
+      buildFaecher();
+      $('faecher-rows').lastElementChild.querySelector('.c-de').focus();
+    }
+    update();
+  }
+
+  // Zeilen aus Text uebernehmen: ohne idx die ganze Liste ersetzen,
+  // mit idx die Zeile idx durch die neuen ersetzen. Gibt die Anzahl zurueck.
+  function pasteRows(kind, text, idx) {
+    const rows = kind === 'kinder' ? parseKinderCsv(text) : parseFaecherCsv(text);
+    if (!rows.length) return 0;
+    const arr = state[kind];
+    if (idx == null) arr.splice(0, arr.length, ...rows); else arr.splice(idx, 1, ...rows);
+    if (kind === 'kinder') buildKinder(); else { faecherSource = 'Zwischenablage'; buildFaecher(); }
+    update();
+    return rows.length;
+  }
+  async function pasteFromClipboard(kind) {
+    let t;
+    try { t = await navigator.clipboard.readText(); }
+    catch (e) { note('Zwischenablage nicht lesbar – stattdessen mit ⌘V / Strg+V in ein Feld der Tabelle einfügen.', true); return; }
+    const n = pasteRows(kind, t);
+    note(n ? `${n} ${n === 1 ? 'Zeile' : 'Zeilen'} aus der Zwischenablage übernommen.` : 'Zwischenablage enthält keine passenden Zeilen.', !n);
+  }
+
+  /* ---------- Etiketten ---------- */
+
+  // Oben Fuchs | Vorname, darunter der Gegenstand in eigener Zeile ueber die
+  // volle Breite - einsprachig nur Deutsch, zweisprachig "Deutsch / slowenisch".
+  function labelHTML(f, name, bilingual, klasse, jahr) {
+    // "/ slowenisch" bleibt zusammen; bei Umbruch wandert der ganze Teil in die 2. Zeile
+    const subj = esc(f.de) + (bilingual && f.si ? ` <span class="si">/&nbsp;${esc(f.si)}</span>` : '');
+    return `<div class="label">
+      <div class="top">
+        <div class="fox"><img src="${esc(imgPath(f.file))}" alt=""></div>
+        <div class="text"><div class="name">${esc(name)}</div></div>
+      </div>
+      <div class="subj">${subj}</div>
+      <div class="cls">${esc(klasse)}</div>
+      <div class="year">${esc(jahr)}</div>
+    </div>`;
+  }
+
+  // Buch-Etikett: nur Bild und Vorname
+  function buchLabelHTML(file, name) {
+    return `<div class="label buch">
+      <div class="fox"><img src="${esc(imgPath(file))}" alt=""></div>
+      <div class="text"><div class="name">${esc(name)}</div></div>
+    </div>`;
+  }
+
+  // Etiketten auf Boegen verteilen; der letzte wird mit leeren Feldern auf
+  // das volle Raster ergaenzt (leere Klebeetiketten bleiben auf dem Bogen).
+  function sheets(labels, typ, ariaBase) {
+    const per = FORMATE[typ].perPage, out = [];
+    for (let i = 0; i < labels.length; i += per) {
+      const page = labels.slice(i, i + per);
+      while (page.length < per) page.push(`<div class="label empty${typ === 'buch' ? ' buch' : ''}"></div>`);
+      out.push(`<div class="slot"><section class="sheet ${typ}" aria-label="${esc(ariaBase)}, Seite ${out.length + 1}">
+        <div class="grid">${page.join('')}</div>
+      </section></div>`);
+    }
+    return out;
+  }
+
+  function render() {
+    const kinder = state.kinder.filter(k => k.name.trim());
+    const faecher = state.faecher.filter(f => f.file.trim() && f.de.trim());
+    const klasse = state.klasse.trim(), jahr = state.jahr.trim();
+
+    const buch = state.typ === 'buch';
+    $('kinder-count').textContent = state.kinder.length ? `${kinder.length} von ${state.kinder.length}` : '';
+    $('faecher-count').textContent = state.faecher.length ? `${faecher.length} von ${state.faecher.length} · ${faecherSource}` : '';
+
+    const missing = [];
+    if (state.kinder.length - kinder.length) missing.push(`${state.kinder.length - kinder.length} Kind(er) ohne Vorname`);
+    if (!buch && state.faecher.length - faecher.length) missing.push(`${state.faecher.length - faecher.length} Gegenstand/-stände ohne Bild oder Sprache 1`);
+    warnEl.hidden = !missing.length;
+    warnEl.textContent = missing.length ? 'Nicht gedruckt: ' + missing.join(', ') + '.' : '';
+
+    if (buch) {
+      const cnt = k => k.bilingual ? state.buch.count.bi : state.buch.count.mono;
+      const labels = kinder.flatMap(k => Array.from({ length: cnt(k) }, () => buchLabelHTML(state.buch.file, k.name.trim())));
+      if (!kinder.length || !state.buch.file || !labels.length) {
+        pagesEl.innerHTML = `<div class="empty-state">${!kinder.length ? 'Noch kein Kind mit Vorname in der Klassenliste.' : !state.buch.file ? 'Noch kein Bild für die Buch-Etiketten gewählt.' : 'Beide Zähler stehen auf 0 – kein Etikett zu drucken.'} 24 Etiketten je Bogen.</div>`;
+        statsEl.textContent = '';
+        return;
+      }
+      const pages = sheets(labels, 'buch', `Buch-Etiketten ${klasse}`);
+      pagesEl.innerHTML = pages.join('');
+      fitNames();
+      const bi = kinder.filter(k => k.bilingual).length;
+      statsEl.innerHTML = `<b>${bi}</b> zweisprachig × <b>${state.buch.count.bi}</b>, <b>${kinder.length - bi}</b> einsprachig × <b>${state.buch.count.mono}</b> · <b>${labels.length}</b> Etiketten auf <b>${pages.length}</b> ${pages.length === 1 ? 'Bogen' : 'Bögen'}`;
+      return;
+    }
+
+    if (!kinder.length || !faecher.length) {
+      pagesEl.innerHTML = `<div class="empty-state">${!kinder.length ? 'Noch kein Kind mit Vorname in der Klassenliste.' : 'Noch kein vollständiger Gegenstand (Bild und Sprache 1 nötig).'} Für jedes Kind entsteht pro 8 Gegenstände eine A4-Seite.</div>`;
+      statsEl.textContent = '';
+      return;
+    }
+    // Gegenstaende mit "Für" nur an die passende Gruppe; alle Kinder
+    // hintereinander, die Boegen werden durchgehend gefuellt.
+    const forKid = k => faecher.filter(f => (f.aud || 'all') === 'all' || (f.aud === 'bi') === k.bilingual);
+    const labels = kinder.flatMap(k => forKid(k).map(f => labelHTML(f, k.name.trim(), k.bilingual, klasse, jahr)));
+    const pages = sheets(labels, 'heft', `Heft-Etiketten ${klasse}`);
+    pagesEl.innerHTML = pages.join('') || '<div class="empty-state">Kein Gegenstand passt zu den Kindern der Liste (Spalte „Für").</div>';
+    fitNames();
+    const bi = kinder.filter(k => k.bilingual).length;
+    statsEl.innerHTML = `<b>${kinder.length}</b> ${kinder.length === 1 ? 'Kind' : 'Kinder'} · <b>${bi}</b> zweisprachig, <b>${kinder.length - bi}</b> einsprachig · <b>${labels.length}</b> Etiketten auf <b>${pages.length}</b> ${pages.length === 1 ? 'Seite' : 'Seiten'}`;
+  }
+
+  function update() { render(); persist(); }
+
+  // Heft- wie Buch-Etikett: Schrift bleibt, das Bild schrumpft (CSS). Notbremse
+  // nur fuer Namen, die selbst ohne Bild breiter als das Etikett sind - sonst
+  // liefe der Text auf den Nachbar-Aufkleber.
+  function fitNames() {
+    document.querySelectorAll('.label:not(.empty) .name').forEach(name => {
+      name.style.fontSize = '';
+      const label = name.closest('.label'), cs = getComputedStyle(label);
+      const avail = label.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const w = name.scrollWidth;
+      if (w > avail) { name.style.fontSize = (parseFloat(getComputedStyle(name).fontSize) * avail / w) + 'px'; name.title = 'Name zu lang, Schrift verkleinert'; }
+    });
+  }
+  if (document.fonts?.ready) document.fonts.ready.then(fitNames);   // Breiten aendern sich mit der geladenen Schrift
+
+  /* ---------- Projekt: speichern, laden, merken ---------- */
+
+  // Projektdatei: alles, was die App braucht, als JSON.
+  function projectJson() {
+    return JSON.stringify({
+      format: FORMAT,
+      klasse: state.klasse,
+      schuljahr: state.jahr,
+      buch: { bild: state.buch.file, pro_kind_zweisprachig: state.buch.count.bi, pro_kind_einsprachig: state.buch.count.mono },
+      klassenliste: state.kinder.map(k => ({ variante: k.bilingual ? 'zweisprachig' : 'einsprachig', vorname: k.name })),
+      gegenstaende: state.faecher.map(f => ({ bild: f.file, sprache1: f.de, sprache2: f.si, fuer: AUD_LABEL[f.aud || 'all'] })),
+    }, null, 2);
+  }
+  function applyProject(obj, source) {
+    if (!obj || typeof obj !== 'object' || !Array.isArray(obj.klassenliste) || !Array.isArray(obj.gegenstaende)) {
+      throw new Error('keine Fuchs-Etiketten-Projektdatei (erwartet klasse, schuljahr, klassenliste, gegenstaende)');
+    }
+    const str = v => String(v ?? '');
+    state.klasse = str(obj.klasse ?? state.klasse); state.jahr = str(obj.schuljahr ?? state.jahr);
+    const b = obj.buch ?? {}, pk = b.pro_kind ?? 1;   // pro_kind: aelteres Feld fuer beide Gruppen
+    state.buch = { file: str(b.bild ?? '01_deutsch.png'), count: { bi: clampCount(b.pro_kind_zweisprachig ?? pk), mono: clampCount(b.pro_kind_einsprachig ?? pk) } };
+    state.kinder = obj.klassenliste.map(k => ({ bilingual: parseVariant(str(k.variante)) !== false, name: str(k.vorname) }));
+    // sprache1/sprache2; aeltere Dateien hiessen die Felder deutsch/slowenisch
+    state.faecher = obj.gegenstaende.map(f => ({ file: str(f.bild), de: str(f.sprache1 ?? f.deutsch), si: str(f.sprache2 ?? f.slowenisch), aud: parseAudience(str(f.fuer)) || 'all' }));
+    faecherSource = source;
+    klasseEl.value = state.klasse; jahrEl.value = state.jahr;
+    buildKinder(); buildFaecher(); buildBuch(); applyTyp();
+  }
+
+  let uploadTarget = null;
+  $('img-file').addEventListener('change', e => {
+    const file = e.target.files[0], f = uploadTarget;
+    e.target.value = ''; uploadTarget = null;
+    if (!file || !f) return;
+    shrinkImage(file)
+      .then(data => { f.file = data; if (f === state.buch) buildBuch(); else buildFaecher(); update(); note(`Bild übernommen: ${file.name}`); })
+      .catch(err => note(`${file.name}: ${err.message}`, true));
+  });
+
+  // Arbeitsstand im Browser merken, damit nichts verloren geht. Mit vielen
+  // eigenen Bildern kann der Browser-Speicher (ca. 5 MB) nicht reichen.
+  let persistWarned = false;
+  function persist() {
+    try { localStorage.setItem(STORE_KEY, projectJson()); }
+    catch (e) {
+      if (!persistWarned) { persistWarned = true; note('Arbeitsstand ist zu groß für den Browser-Speicher – bitte als Projekt speichern.', true); }
+    }
+  }
+  function restore() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) { applyProject(JSON.parse(raw), 'zuletzt bearbeitet'); return true; }
+    } catch (e) {}
+    return false;
+  }
+
+  function note(msg, isError) {
+    statusEl.hidden = !msg; statusEl.textContent = msg; statusEl.classList.toggle('warn', !!isError);
+    if (msg && !isError) setTimeout(() => { statusEl.hidden = true; }, 6000);
+  }
+  function safeName(s) { return (s || 'Klasse').trim().replace(/[^\p{L}\p{N}_-]+/gu, '_') || 'Klasse'; }
+
+  // Projektdatei: Chrome/Edge merken sich ueber die File-System-Access-API
+  // die geoeffnete bzw. zuletzt gespeicherte Datei (fileHandle) und koennen
+  // sie mit "Speichern" ueberschreiben. Safari/Firefox kennen die API nicht:
+  // dort laedt ein Dateidialog, und jedes Speichern ist ein Download.
+  const NAME_KEY = 'fuchs-etiketten-dateiname';
+  const FILE_TYPES = [{ description: 'Heftetiketten-Projekt', accept: { 'application/json': ['.json'] } }];
+  const canPick = !!(window.showOpenFilePicker && window.showSaveFilePicker);
+  let fileHandle = null, projName = '';
+
+  function setProjName(name) {
+    projName = name || '';
+    try { if (projName) localStorage.setItem(NAME_KEY, projName); else localStorage.removeItem(NAME_KEY); } catch (e) {}
+    $('proj-name').textContent = projName || 'ungespeichert';
+    $('proj-hint').textContent = !canPick
+      ? 'Dieser Browser kann Dateien nicht direkt überschreiben: Speichern legt die Datei im Download-Ordner ab.'
+      : fileHandle ? `Speichern überschreibt ${projName}.`
+      : projName ? 'Die Datei ist nach dem Neuladen nicht mehr verbunden – Speichern fragt einmal nach dem Speicherort, danach wird überschrieben.'
+      : 'Speichern fragt beim ersten Mal nach dem Speicherort.';
+  }
+  async function writeTo(handle) {
+    const w = await handle.createWritable();
+    await w.write(new Blob([projectJson()], { type: 'application/json' }));
+    await w.close();
+  }
+  function download(name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([projectJson()], { type: 'application/json' })); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  async function saveProjectAs() {
+    const name = projName || `Etiketten_${safeName(state.klasse)}.json`;
+    if (canPick) {
+      try {
+        const h = await showSaveFilePicker({ suggestedName: name, types: FILE_TYPES });
+        await writeTo(h); fileHandle = h; setProjName(h.name); note(`Gespeichert: ${h.name}`);
+      } catch (e) { if (e.name !== 'AbortError') note('Speichern nicht möglich: ' + e.message, true); }
+      return;
+    }
+    download(name); setProjName(name); note(`${name} liegt im Download-Ordner.`);
+  }
+  async function saveProject() {
+    if (!fileHandle) return saveProjectAs();
+    try { await writeTo(fileHandle); note(`Gespeichert: ${fileHandle.name}`); }
+    catch (e) { if (e.name !== 'AbortError') note('Speichern nicht möglich: ' + e.message, true); }
+  }
+  async function loadProjectFile(file) {
+    const t = await file.text();
+    applyProject(JSON.parse(t), file.name);
+    update(); note(`Geladen: ${file.name}`);
+  }
+  async function openProject() {
+    if (!canPick) { $('proj-file').click(); return; }
+    try {
+      const [h] = await showOpenFilePicker({ types: FILE_TYPES, multiple: false });
+      await loadProjectFile(await h.getFile()); fileHandle = h; setProjName(h.name);
+    } catch (e) { if (e.name !== 'AbortError') note('Laden nicht möglich: ' + e.message, true); }
+  }
+  function newProject() {
+    if (!confirm('Neues Projekt: Klasse, Schuljahr, Klassenliste, Gegenstände und Buch-Bild werden geleert. Ungespeicherte Änderungen gehen verloren.')) return;
+    state.klasse = ''; state.jahr = ''; state.kinder = []; state.faecher = [];
+    state.buch = { file: '', count: { bi: 1, mono: 1 } };
+    faecherSource = 'leer'; fileHandle = null; setProjName('');
+    klasseEl.value = ''; jahrEl.value = '';
+    buildKinder(); buildFaecher(); buildBuch(); update(); note('Neues Projekt.');
+  }
+  function importCsv(kind, file) {
+    file.text().then(t => {
+      if (kind === 'kinder') { state.kinder = parseKinderCsv(t); buildKinder(); }
+      else { state.faecher = parseFaecherCsv(t); faecherSource = file.name; buildFaecher(); }
+      update(); note(`Importiert: ${file.name}`);
+    }).catch(e => note(`${file.name}: ${e.message}`, true));
+  }
+
+  /* ---------- Bogen an Fensterbreite anpassen; im Druck immer 1:1 ---------- */
+
+  const A4_PX = 21 / 2.54 * 96;
+  function fit() {
+    const m = document.querySelector('.main');
+    const w = m.clientWidth - 2 * parseFloat(getComputedStyle(m).paddingLeft);
+    document.documentElement.style.setProperty('--s', Math.min(1, w / A4_PX).toFixed(4));
+  }
+
+  /* ---------- Verdrahtung ---------- */
+
+  $('fox-file-list').innerHTML = FOX_FILES.map(([f]) => `<code>${f}</code>`).join(', ');
+  document.querySelectorAll('input[name="typ"]').forEach(r => r.addEventListener('change', () => { state.typ = r.value; applyTyp(); update(); }));
+  klasseEl.addEventListener('input', () => { state.klasse = klasseEl.value; update(); });
+  jahrEl.addEventListener('input', () => { state.jahr = jahrEl.value; update(); });
+  $('kind-add').addEventListener('click', () => addRow('kinder'));
+  $('fach-add').addEventListener('click', () => addRow('faecher'));
+  $('kinder-paste').addEventListener('click', () => pasteFromClipboard('kinder'));
+  $('faecher-paste').addEventListener('click', () => pasteFromClipboard('faecher'));
+  $('print').addEventListener('click', () => window.print());
+  $('proj-new').addEventListener('click', newProject);
+  $('proj-open').addEventListener('click', openProject);
+  $('proj-save').addEventListener('click', saveProject);
+  $('proj-saveas').addEventListener('click', saveProjectAs);
+  const loadProject = f => { fileHandle = null; loadProjectFile(f).then(() => setProjName(f.name)).catch(e => note(`${f.name}: ${e.message}`, true)); };
+  for (const [id, fn] of [['proj-file', loadProject], ['kinder-csv', f => importCsv('kinder', f)], ['faecher-csv', f => importCsv('faecher', f)]]) {
+    $(id).addEventListener('change', e => { const f = e.target.files[0]; if (f) fn(f); e.target.value = ''; });
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('beforeprint', () => document.documentElement.style.setProperty('--s', '1'));
+  window.addEventListener('afterprint', fit);
+
+  /* ---------- Start ---------- */
+
+  fit();
+  try { if (localStorage.getItem(VIEW_KEY) === 'buch') state.typ = 'buch'; } catch (e) {}
+  try { setProjName(localStorage.getItem(NAME_KEY) || ''); } catch (e) { setProjName(''); }
+  if (!restore()) {
+    state.kinder = parseKinderCsv(DEFAULT_KINDER_CSV);
+    state.faecher = parseFaecherCsv(DEFAULT_FAECHER_CSV);
+    klasseEl.value = state.klasse; jahrEl.value = state.jahr;
+    buildKinder(); buildFaecher(); buildBuch(); applyTyp();
+    // gegenstaende.csv neben der HTML-Datei hat Vorrang, wenn der Browser sie
+    // lesen darf (Webserver oder Safari; Chrome/Firefox blockieren fetch bei file://).
+    fetch('gegenstaende.csv')
+      .then(r => r.ok ? r.text() : Promise.reject(new Error(r.status)))
+      .then(t => { const rows = parseFaecherCsv(t); if (rows.length) { state.faecher = rows; faecherSource = 'gegenstaende.csv'; buildFaecher(); update(); } })
+      .catch(() => {});
+  }
+  render();
+</script>

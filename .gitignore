@@ -1,0 +1,11 @@
+# Nur die Web-App liegt im Repo. Alles andere (README, Quellen, Skripte,
+# Klassenlisten) bleibt lokal.
+*
+!.gitignore
+!index.html
+!etiketten.css
+!fonts.css
+!favicon.png
+!foxes/
+!foxes/*.png
+foxes/_uebersicht.png
